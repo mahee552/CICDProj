@@ -37,7 +37,7 @@ jobs:
             /p:WebPublishMethod=FileSystem `
             /p:publishUrl="${{ github.workspace }}/published" `
             /p:DeleteExistingFiles=True `
-            /p:PrecompileBeforePublish=true
+            /p:PrecompileBeforePublish=true `
             /verbosity:detailed
 
       - name: Upload artifact

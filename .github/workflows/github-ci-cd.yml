@@ -27,21 +27,27 @@ jobs:
 
       - name: Build solution
         run: |
-            # Create absolute path to avoid any confusion
-            $publishPath = "${{ github.workspace }}/published"
-            mkdir $publishPath 
+            # Get commit hash (7 characters)
+            $commitHash = git rev-parse --short HEAD
+    
+            # Create versioned output directory
+            $publishDir = "publish_${{ github.ref_name }}_$commitHash"            
+            mkdir $publishDir
 
             msbuild CICDProj/CICDProj/CICDProj.csproj `
             /p:Configuration=Release `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
-            /p:publishUrl="$publishPath" `
+            /p:publishUrl="$publishDir" `
             /p:DeleteExistingFiles=True `
             /p:PrecompileBeforePublish=true `
-            /verbosity:detailed
+            /verbosity:detailed `
+
+            # Create zip (PowerShell cross-platform method)
+            Compress-Archive -Path "$publishDir/*" -DestinationPath "WebFormsApp_${{ github.ref_name }}_$commitHash.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: published-app
-          path: published/**
+          name: webforms-app-zip
+          path: WebFormsApp_*.zip

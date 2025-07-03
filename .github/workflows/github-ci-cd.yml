@@ -20,7 +20,7 @@ jobs:
         uses: NuGet/setup-nuget@v1
 
       - name: Restore NuGet packages
-        run: nuget restore CICDProj/CICDProj/CICDProj.sln
+        run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
 
       - name: Install WebDeploy
         run: choco install webdeploy -y --no-progress
@@ -37,6 +37,7 @@ jobs:
             /p:publishUrl="$publishPath" `
             /p:DeleteExistingFiles=True `
             /p:PrecompileBeforePublish=true `
+            /p:WebPublishMethod=FileSystem 
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

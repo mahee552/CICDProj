@@ -20,7 +20,7 @@ jobs:
         uses: NuGet/setup-nuget@v1
 
       - name: Restore NuGet packages
-        run: nuget restore CICDProj/CICDProj/CICDProj.sln
+        run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
 
       - name: Build solution
         run: |

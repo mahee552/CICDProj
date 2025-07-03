@@ -22,29 +22,43 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
 
-      - name: Install WebDeploy (Required for WebForms Publishing)
+      - name: Install WebDeploy
         run: choco install webdeploy -y --no-progress
 
-      - name: Build solution
+      - name: Build solution and create zip
         run: |
-            # Get commit hash (7 characters)
-            $commitHash = git rev-parse --short HEAD
-    
-            # Create versioned output directory
-            $publishDir = "publish_${{ github.ref_name }}_$commitHash"            
-            mkdir $publishDir
-
-            msbuild CICDProj/CICDProj/CICDProj.csproj `
+          $commitHash = git rev-parse --short HEAD
+          $branchName = $env:GITHUB_REF_NAME
+          $publishDir = "publish_${branchName}_${commitHash}"
+          
+          # Build and publish
+          msbuild CICDProj/CICDProj/CICDProj.csproj `
             /p:Configuration=Release `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
             /p:publishUrl="$publishDir" `
             /p:DeleteExistingFiles=True `
             /p:PrecompileBeforePublish=true `
-            /verbosity:detailed `
+            /verbosity:detailed
 
-            # Create zip (PowerShell cross-platform method)
-            Compress-Archive -Path "$publishDir/*" -DestinationPath "WebFormsApp_${{ github.ref_name }}_$commitHash.zip"
+          # Verify publish directory exists and has content
+          if (-not (Test-Path $publishDir)) {
+            Write-Error "Publish directory '$publishDir' not found!"
+            exit 1
+          }
+          if (-not (Get-ChildItem $publishDir -Recurse)) {
+            Write-Error "Publish directory '$publishDir' is empty!"
+            exit 1
+          }
+
+          # Create ZIP using .NET (more reliable)
+          $zipName = "WebFormsApp_${branchName}_${commitHash}.zip"
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::CreateFromDirectory($publishDir, $zipName)
+
+          # Debug: Show created files
+          Write-Host "Generated files:"
+          Get-ChildItem -Path . -Include *.zip -Recurse | Format-List
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -44,7 +44,6 @@ jobs:
           dir "$publishPath" /s
 
       - name: Upload artifact
-        if: exists('PublishOutput')
         uses: actions/upload-artifact@v4
         with: 
           name: webforms-app

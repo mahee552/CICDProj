@@ -27,11 +27,15 @@ jobs:
 
       - name: Build solution
         run: |
+            # Create absolute path to avoid any confusion
+            $publishPath = "${{ github.workspace }}/published"
+            mkdir $publishPath 
+
             msbuild CICDProj/CICDProj/CICDProj.csproj `
             /p:Configuration=Release `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
-            /p:publishUrl=$(System.DefaultWorkingDirectory)/published `
+            /p:publishUrl="${{ github.workspace }}/published" `
             /p:DeleteExistingFiles=True `
             /p:PrecompileBeforePublish=true
             /verbosity:detailed

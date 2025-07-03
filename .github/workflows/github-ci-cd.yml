@@ -1,59 +1,51 @@
-﻿name: Build and Publish
+﻿name: Build and Publish ASP.NET 4.8 WebForms App
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
-    name: Build
     runs-on: windows-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1
-    
-    - name: Restore NuGet packages
-      run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
-    
-    - name: Build project
-      run: msbuild CICDProj/CICDProj/CICDProj.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=BuildOutput
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-output
-        path: BuildOutput
 
-  publish:
-    name: Publish
-    needs: build
-    runs-on: windows-latest
-    
     steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-output
-        path: BuildOutput
-    
-    - name: Create publish directory
-      run: |
-        if (Test-Path 'Publish') { Remove-Item 'Publish' -Recurse -Force }
-        New-Item 'Publish' -ItemType Directory
-        Copy-Item -Path BuildOutput\* -Destination Publish -Recurse
-    
-    - name: Create ZIP archive
-      run: Compress-Archive -Path Publish\_PublishedWebsites -DestinationPath CICDProj_${{ github.sha }}.zip
-    
-    - name: Upload publish artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: CICDProj-package
-        path: CICDProj_${{ github.sha }}.zip
-        retention-days: 7
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1
+
+      - name: Restore NuGet packages
+        run: nuget restore CICDProj/CICDProj/CICDProj.sln
+
+      - name: Install WebDeploy
+        run: choco install webdeploy -y --no-progress
+
+      - name: Build and Publish
+        run: |
+          $publishPath = "${{ github.workspace }}\PublishOutput"
+          mkdir $publishPath -Force
+          
+          msbuild CICDProj/CICDProj/CICDProj.csproj `
+            /p:Configuration=Release `
+            /p:DeployOnBuild=true `
+            /p:PublishProfile=FolderProfile `
+            /p:publishUrl="$publishPath" `
+            /p:DeleteExistingFiles=True `
+            /p:PrecompileBeforePublish=true `
+            /p:VisualStudioVersion=16.0 `
+            /verbosity:diagnostic
+          
+          # Debug: List published files
+          dir "$publishPath" /s
+
+      - name: Upload artifact
+        if: exists('PublishOutput')
+        uses: actions/upload-artifact@v4
+        with: 
+          name: webforms-app
+          path: PublishOutput\

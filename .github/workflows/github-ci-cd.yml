@@ -22,14 +22,19 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
 
+      - name: Install WebDeploy (Required for WebForms Publishing)
+        run: choco install webdeploy -y --no-progress
+
       - name: Build solution
         run: |
             msbuild CICDProj/CICDProj/CICDProj.csproj `
             /p:Configuration=Release `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
-            /p:PublishUrl="${{ github.workspace }}/published" `
+            /p:publishUrl=$(System.DefaultWorkingDirectory)/published `
+            /p:DeleteExistingFiles=True `
             /p:PrecompileBeforePublish=true
+            /verbosity:detailed
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

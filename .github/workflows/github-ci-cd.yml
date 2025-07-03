@@ -22,7 +22,7 @@ jobs:
       run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
     
     - name: Build project
-      run: msbuild CICDProj/CICDProj/CICDProj.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=../BuildOutput
+      run: msbuild CICDProj/CICDProj/CICDProj.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=BuildOutput
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4

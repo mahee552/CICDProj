@@ -37,8 +37,6 @@ jobs:
             /p:publishUrl="$publishPath" `
             /p:DeleteExistingFiles=True `
             /p:PrecompileBeforePublish=true `
-            /p:VisualStudioVersion=16.0 `
-            /verbosity:diagnostic
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -19,7 +19,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1
     
     - name: Restore NuGet packages
-      run: msbuild /t:Restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packagess
+      run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
     
     - name: Build project
       run: msbuild CICDProj/CICDProj/CICDProj.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=../BuildOutput

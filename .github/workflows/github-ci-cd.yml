@@ -39,9 +39,6 @@ jobs:
             /p:PrecompileBeforePublish=true `
             /p:VisualStudioVersion=16.0 `
             /verbosity:diagnostic
-          
-          # Debug: List published files
-          dir "$publishPath" /s
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

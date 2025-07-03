@@ -1,57 +1,59 @@
-﻿name: Build and Publish ASP.NET 4.8 WebForms App
+﻿name: Build and Publish
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
+    name: Build
     runs-on: windows-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
+    
+    - name: Restore NuGet packages
+      run: msbuild /t:Restore CICDProj/CICDProj/CICDProj.sln
+    
+    - name: Build project
+      run: msbuild CICDProj/CICDProj/CICDProj.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=../BuildOutput
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-output
+        path: BuildOutput
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1
-
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1
-
-      - name: Restore NuGet packages
-        run: nuget restore CICDProj/CICDProj/CICDProj.sln -PackagesDirectory CICDProj/packages
-
-      - name: Install WebDeploy
-        run: choco install webdeploy -y --no-progress
-
-      - name: Build solution and create zip
-        run: |
-          $commitHash = git rev-parse --short HEAD
-          $branchName = $env:GITHUB_REF_NAME
-          $publishDir = "publish_${branchName}_${commitHash}"
-          
-          # Build and publish
-          msbuild CICDProj/CICDProj/CICDProj.csproj `
-            /p:Configuration=Release `
-            /p:DeployOnBuild=true `
-            /p:WebPublishMethod=FileSystem `
-            /p:publishUrl="$publishDir" `
-            /p:DeleteExistingFiles=True `
-            /p:PrecompileBeforePublish=true `
-            /verbosity:detailed
-
-          # Create ZIP using .NET (more reliable)
-          $zipName = "WebFormsApp_${branchName}_${commitHash}.zip"
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          [System.IO.Compression.ZipFile]::CreateFromDirectory($publishDir, $zipName)
-
-          # Debug: Show created files
-          Write-Host "Generated files:"
-          Get-ChildItem -Path . -Include *.zip -Recurse | Format-List
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: webforms-app-zip
-          path: WebFormsApp_*.zip
+  publish:
+    name: Publish
+    needs: build
+    runs-on: windows-latest
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-output
+        path: BuildOutput
+    
+    - name: Create publish directory
+      run: |
+        if (Test-Path 'Publish') { Remove-Item 'Publish' -Recurse -Force }
+        New-Item 'Publish' -ItemType Directory
+        Copy-Item -Path BuildOutput\* -Destination Publish -Recurse
+    
+    - name: Create ZIP archive
+      run: Compress-Archive -Path Publish\_PublishedWebsites -DestinationPath CICDProj_${{ github.sha }}.zip
+    
+    - name: Upload publish artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CICDProj-package
+        path: CICDProj_${{ github.sha }}.zip
+        retention-days: 7

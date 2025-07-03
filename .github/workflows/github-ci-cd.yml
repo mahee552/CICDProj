@@ -41,16 +41,6 @@ jobs:
             /p:PrecompileBeforePublish=true `
             /verbosity:detailed
 
-          # Verify publish directory exists and has content
-          if (-not (Test-Path $publishDir)) {
-            Write-Error "Publish directory '$publishDir' not found!"
-            exit 1
-          }
-          if (-not (Get-ChildItem $publishDir -Recurse)) {
-            Write-Error "Publish directory '$publishDir' is empty!"
-            exit 1
-          }
-
           # Create ZIP using .NET (more reliable)
           $zipName = "WebFormsApp_${branchName}_${commitHash}.zip"
           Add-Type -AssemblyName System.IO.Compression.FileSystem

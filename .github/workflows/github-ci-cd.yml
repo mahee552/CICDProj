@@ -17,11 +17,11 @@ jobs:
         uses: NuGet/setup-nuget@v1
 
       - name: Restore NuGet packages
-        run: nuget restore CICDProj/CICDProj.csproj
+        run: nuget restore CICDProj/CICDProj/CICDProj.csproj
 
       - name: Build solution
         run: |
-          msbuild CICDProj/CICDProj.csproj `
+          msbuild CICDProj/CICDProj/CICDProj.csproj `
             /p:Configuration=Release `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
